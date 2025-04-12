@@ -438,6 +438,9 @@
     <Reference Include="UnityEngine.XRModule">
       <HintPath>D:\SteamLibrary\steamapps\common\Wildfrost\Modded\Wildfrost_Data\Managed\UnityEngine.XRModule.dll</HintPath>
     </Reference>
+    <Reference Include="Config Manager">
+      <HintPath>D:\SteamLibrary\steamapps\workshop\content\1811990\3175889529\Config Manager.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BlindMode.cs" />
