@@ -1,0 +1,41 @@
+# Build artifacts
+bin/
+obj/
+OutPut/
+
+# User-specific and IDE settings
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# NuGet packages
+packages/
+*.nupkg
+project.lock.json
+
+# Logs
+*.log
+logs/
+
+# Generated files
+*.generated.cs
+*.Designer.cs
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
+# Unity-specific (if applicable)
+Library/
+Temp/
+Logs/
+UserSettings/
+MemoryCaptures/
+Builds/
