@@ -103,6 +103,7 @@ namespace BlindModeMode
 
         private void FlipAll(Entity entity)
         {
+            if(Deckpack.IsOpen) return;
             if (Battle.instance != null)
             {
                 if (entity.owner != Battle.instance.player)
@@ -128,9 +129,10 @@ namespace BlindModeMode
             }
             if (target.data.cardType.name == "Leader") return;
 
-            StringTable collection = LocalizationHelper.GetCollection("Cards", new LocaleIdentifier(SystemLanguage.English));
-            collection.SetString("Mystery_title", "???");
-            target.data.titleKey = collection.GetString("Mystery_title");
+            // StringTable collection = LocalizationHelper.GetCollection("Cards", new LocaleIdentifier(SystemLanguage.English));
+            // collection.SetString("Mystery_title", "???");
+            // target.data.titleKey = collection.GetString("Mystery_title");
+            target.data.forceTitle = "???";
 
             var mask = target.gameObject.GetComponentInChildren<Canvas>().transform.Find("Front");
             GameObject back = target.gameObject.GetComponentInChildren<Canvas>().transform.Find("Back").gameObject;
@@ -158,13 +160,15 @@ namespace BlindModeMode
         }
         private void UnFlip(Entity target)
         {
+            // StringTable collection = LocalizationHelper.GetCollection("Cards", new LocaleIdentifier(SystemLanguage.English));
+            // target.data.titleKey = collection.GetString(target.data.name + "_title");
+            target.data.forceTitle = "";
+
             var canvas = target.GetComponentInChildren<Canvas>().transform;
             var equalClone = canvas.Find("=");
 
             if (equalClone == null) return;
 
-            StringTable collection = LocalizationHelper.GetCollection("Cards", new LocaleIdentifier(SystemLanguage.English));
-            target.data.titleKey = collection.GetString(target.data.name + "_title");
 
             GameObject.Destroy(equalClone.gameObject);
 
