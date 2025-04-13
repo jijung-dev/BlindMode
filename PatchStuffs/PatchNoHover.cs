@@ -33,8 +33,7 @@ class PatchChangeSprite
 {
 	static bool Prefix(MapNodeSpriteSetterBattle __instance, MapNode mapNode)
 	{
-		bool blindEnemy = BlindMode.instance.blindmode == BlindingMode.Enemy || BlindMode.instance.blindmode == BlindingMode.EnemyAndItem || BlindMode.instance.blindmode == BlindingMode.EnemyAndFriendlyAndItem;
-		if (!blindEnemy) return true;
+		if (!BlindMode.instance.blindEnemy) return true;
 
 		if ((bool)__instance.@base)
 		{

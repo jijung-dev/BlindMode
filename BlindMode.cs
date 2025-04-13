@@ -20,11 +20,7 @@ namespace BlindModeMode
     {
         Enemy,
         Friendly,
-        Item,
         EnemyAndFriendly,
-        EnemyAndItem,
-        FriendlyAndItem,
-        EnemyAndFriendlyAndItem,
     }
     public class BlindMode : WildfrostMod
     {
@@ -46,11 +42,18 @@ namespace BlindModeMode
         public override string Description =>
         "Got Blinded";
 
-        [ConfigItem(BlindingMode.Enemy, "", "Blind Mode")]
-        [ConfigManagerTitle("Blind Mode")]
-        [ConfigManagerDesc("Lmao")]
+        [ConfigManagerTitle("Blinding Mode")]
+        [ConfigItem(BlindingMode.Enemy, "", "Blinding Mode")]
         [ConfigOptions(typeof(BlindingMode))]
         public BlindingMode blindmode;
+
+        [ConfigManagerTitle("Custom Boss Back")]
+        [ConfigItem(true, "", "Custom Boss Back")]
+        [ConfigOptions]
+        public bool customBack;
+
+        public bool blindEnemy => blindmode == BlindingMode.Enemy || blindmode == BlindingMode.EnemyAndFriendly;
+        public bool blindFriendly => blindmode == BlindingMode.Friendly || blindmode == BlindingMode.EnemyAndFriendly;
         public override List<T> AddAssets<T, Y>()
         {
             if (assets.OfType<T>().Any())
@@ -77,89 +80,53 @@ namespace BlindModeMode
         {
             instance = this;
             base.Load();
-            Events.OnEntityDisplayUpdated += Add;
-            Events.OnEntityCreated += Add;
-            Events.OnBackToMainMenu += UnchangeAll;
-            Events.OnEntityDestroyed += Remove;
+            Events.OnEntityDisplayUpdated += FlipAll;
+            Events.OnEntityCreated += FlipAll;
+            Events.OnBackToMainMenu += UnFlipAll;
+            Events.OnEntityDestroyed += UnFlipAll;
         }
 
-        private void Remove(Entity arg0)
+        private void UnFlipAll(Entity arg0)
         {
             if (Battle.instance == null)
-                UnchangeAll();
+                UnFlipAll();
         }
 
-        private void UnchangeAll()
+        private void UnFlipAll()
         {
             foreach (var item in copies)
             {
-                Unchange(item);
+                UnFlip(item);
             }
             copies.Clear();
         }
 
-        private void Add(Entity entity)
+        private void FlipAll(Entity entity)
         {
-            if (!GetCardTypes().Contains(entity.data.cardType.name) || Battle.instance == null)
-            {
-                Unchange(entity);
-            }
             if (Battle.instance != null)
-                if (GetCardTypes().Contains(entity.data.cardType.name))
-                {
-                    bool isClunker = entity.data.cardType.name == "Clunker";
-                    bool isSummoned = entity.data.cardType.name == "Summoned";
-                    bool isEnemyClunker = entity.data.isEnemyClunker || entity.owner != Battle.instance.player;
-                    bool isEnemySummoned = entity.owner != Battle.instance.player;
-                    bool blindEnemy = blindmode == BlindingMode.Enemy || blindmode == BlindingMode.EnemyAndItem || blindmode == BlindingMode.EnemyAndFriendlyAndItem;
-
-                    if (isClunker)
-                    {
-                        if ((blindEnemy && isEnemyClunker) || (!blindEnemy && !isEnemyClunker))
-                        {
-                            Change(entity);
-                            return;
-                        }
-                    }
-                    else if (isSummoned)
-                    {
-                        if ((blindEnemy && isEnemySummoned) || (!blindEnemy && !isEnemySummoned))
-                        {
-                            Change(entity);
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        Change(entity);
-                    }
-                }
-        }
-        public string[] GetCardTypes()
-        {
-            switch (blindmode)
             {
-                case BlindingMode.Enemy:
-                    return new string[] { "Enemy", "Boss", "Miniboss", "BossSmall", "Clunker", "Summoned" };
-                case BlindingMode.Friendly:
-                    return new string[] { "Friendly", "Clunker", "Summoned" };
-                case BlindingMode.Item:
-                    return new string[] { "Item" };
-                case BlindingMode.EnemyAndFriendly:
-                    return new string[] { "Friendly", "Enemy", "Boss", "Miniboss", "BossSmall", "Clunker", "Summoned" };
-                case BlindingMode.EnemyAndItem:
-                    return new string[] { "Item", "Enemy", "Boss", "Miniboss", "BossSmall", "Clunker", "Summoned" };
-                case BlindingMode.FriendlyAndItem:
-                    return new string[] { "Friendly", "Item", "Clunker", "Summoned" };
-                case BlindingMode.EnemyAndFriendlyAndItem:
-                    return new string[] { "Friendly", "Item", "Enemy", "Boss", "Miniboss", "BossSmall", "Clunker", "Summoned" };
-                default:
-                    return new string[] { "Enemy", "Boss", "Miniboss", "BossSmall", "Clunker", "Summoned" };
+                if (entity.owner != Battle.instance.player)
+                {
+                    if (blindEnemy) Flip(entity);
+                }
+                else
+                {
+                    if (blindFriendly) Flip(entity);
+                }
+            }
+            else
+            {
+                UnFlipAll();
             }
         }
-        private void Change(Entity target)
+        private void Flip(Entity target)
         {
-            if ((bool)target.GetComponentInChildren<Canvas>().transform.Find("=")) return;
+            if ((bool)target.GetComponentInChildren<Canvas>().transform.Find("="))
+            {
+                CheckBack(target, target.GetComponentInChildren<Canvas>().transform.Find("=").gameObject);
+                return;
+            }
+            if (target.data.cardType.name == "Leader") return;
 
             StringTable collection = LocalizationHelper.GetCollection("Cards", new LocaleIdentifier(SystemLanguage.English));
             collection.SetString("Mystery_title", "???");
@@ -170,8 +137,10 @@ namespace BlindModeMode
             var backClone = GameObject.Instantiate(back, target.gameObject.GetComponentInChildren<Canvas>().transform);
             backClone.name = "=";
             backClone.SetActive(true);
+            backClone.GetComponent<AddressableSpriteLoader>().Destroy();
+            CheckBack(target, backClone);
+
             copies.Add(target);
-            //backClone.GetComponent<AddressableSpriteLoader>().Destroy();
 
             foreach (var frame in mask.GetAllChildren())
             {
@@ -187,7 +156,7 @@ namespace BlindModeMode
                 frame.gameObject.SetActive(false);
             }
         }
-        private void Unchange(Entity target)
+        private void UnFlip(Entity target)
         {
             var canvas = target.GetComponentInChildren<Canvas>().transform;
             var equalClone = canvas.Find("=");
@@ -221,13 +190,45 @@ namespace BlindModeMode
                 }
             }
         }
+        public void CheckBack(Entity target, GameObject backClone)
+        {
+            GameObject back = target.gameObject.GetComponentInChildren<Canvas>().transform.Find("Back").gameObject;
+            if (customBack)
+            {
+                if (target.data.cardType.name == "BossSmall" || target.data.cardType.name == "Miniboss")
+                {
+                    backClone.GetComponent<Image>().sprite = ScaledSprite("BossSmall.png", 200, 0);
+                    backClone.GetComponent<RectTransform>().sizeDelta = new Vector2(0.2f, 0f);
+                }
 
-        internal Sprite ScaledSprite(string fileName, int pixelsPerUnit = 100)
+                if (target.data.cardType.name == "Boss")
+                {
+                    backClone.GetComponent<Image>().sprite = ScaledSprite("Boss.png", 200, 0);
+                    backClone.GetComponent<RectTransform>().sizeDelta = new Vector2(0.2f, 0f);
+                }
+            }
+            else
+            {
+                if (target.data.cardType.name == "BossSmall" || target.data.cardType.name == "Miniboss")
+                {
+                    backClone.GetComponent<Image>().sprite = back.GetComponent<Image>().sprite;
+                    backClone.GetComponent<RectTransform>().sizeDelta = new Vector2(0f, 0f);
+                }
+
+                if (target.data.cardType.name == "Boss")
+                {
+                    backClone.GetComponent<Image>().sprite = back.GetComponent<Image>().sprite;
+                    backClone.GetComponent<RectTransform>().sizeDelta = new Vector2(0f, 0f);
+                }
+            }
+        }
+
+        internal Sprite ScaledSprite(string fileName, int pixelsPerUnit = 100, float offset = 110f)
         {
             Texture2D tex = ImagePath(fileName).ToTex();
 
             // Convert 2-pixel offset to normalized Y pivot offset
-            float offsetY = 110f / tex.height;
+            float offsetY = offset / tex.height;
 
             return Sprite.Create(
                 tex,
@@ -241,11 +242,11 @@ namespace BlindModeMode
         public override void Unload()
         {
             base.Unload();
-            Events.OnEntityDisplayUpdated -= Add;
-            Events.OnEntityCreated -= Add;
-            Events.OnBackToMainMenu -= UnchangeAll;
-            Events.OnEntityDestroyed -= Remove;
-            UnchangeAll();
+            Events.OnEntityDisplayUpdated -= FlipAll;
+            Events.OnEntityCreated -= FlipAll;
+            Events.OnBackToMainMenu -= UnFlipAll;
+            Events.OnEntityDestroyed -= UnFlipAll;
+            UnFlipAll();
         }
     }
 }
