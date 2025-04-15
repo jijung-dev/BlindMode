@@ -84,6 +84,22 @@ namespace BlindModeMode
             Events.OnEntityCreated += FlipAll;
             Events.OnBackToMainMenu += UnFlipAll;
             Events.OnEntityDestroyed += UnFlipAll;
+            Events.OnDeckpackOpen += AddnameAll;
+            Events.OnDeckpackClose += RenameAll;
+        }
+        private void RenameAll()
+        {
+            foreach (var item in copies)
+            {
+                item.data.forceTitle = "???";
+            }
+        }
+        private void AddnameAll()
+        {
+            foreach (var item in copies)
+            {
+                item.data.forceTitle = "";
+            }
         }
 
         private void UnFlipAll(Entity arg0)
@@ -103,7 +119,8 @@ namespace BlindModeMode
 
         private void FlipAll(Entity entity)
         {
-            if(Deckpack.IsOpen) return;
+            if (Deckpack.IsOpen) return;
+
             if (Battle.instance != null)
             {
                 if (entity.owner != Battle.instance.player)
@@ -250,6 +267,8 @@ namespace BlindModeMode
             Events.OnEntityCreated -= FlipAll;
             Events.OnBackToMainMenu -= UnFlipAll;
             Events.OnEntityDestroyed -= UnFlipAll;
+            Events.OnDeckpackOpen -= AddnameAll;
+            Events.OnDeckpackClose -= RenameAll;
             UnFlipAll();
         }
     }
